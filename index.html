@@ -25,9 +25,11 @@
     .amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    caption { padding: .7rem .65rem; color: #52636a; text-align: left; }
     th, td { padding: .7rem .65rem; border-bottom: 1px solid #e5ebe7; text-align: left; }
     th { color: #52636a; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
-    th:last-child, td:last-child { text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { width: 4rem; text-align: right; }
+    th:nth-child(3), td:nth-child(3), th:last-child, td:last-child { text-align: right; white-space: nowrap; }
     tbody tr:last-child td { border-bottom: 0; }
     footer { margin-top: 1.75rem; font-size: .85rem; }
     @media (max-width: 600px) {
@@ -42,26 +44,27 @@
   <header>
     <p class="eyebrow">College-town home sales</p>
     <h1>What homes sold for</h1>
-    <p>Median sale price by city, based on completed sales in the dataset. Prices below $1,000 are excluded because the data description identifies them as implausible.</p>
+    <p>Compare typical sale prices across the towns in the dataset. Cities are ranked by median sale price, highest to lowest.</p>
   </header>
   <main>
     <p id="status" role="status" aria-live="polite">Loading sale records…</p>
     <section class="panel" aria-labelledby="chart-heading">
-      <h2 id="chart-heading">Median sale price by city</h2>
+      <h2 id="chart-heading">Median sale price by city, highest to lowest</h2>
       <div class="chart" id="price-chart" role="list" aria-label="Median sale prices shown as horizontal bars"></div>
     </section>
     <section class="panel" aria-labelledby="table-heading">
       <h2 id="table-heading">All city medians</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th scope="col">City</th><th scope="col">State</th><th scope="col">Median sale price</th></tr></thead>
+          <caption>Median sale price by city and state</caption>
+          <thead><tr><th scope="col">Rank</th><th scope="col">City</th><th scope="col">Median sale price</th><th scope="col">Sales included</th></tr></thead>
           <tbody id="price-table"></tbody>
         </table>
       </div>
     </section>
   </main>
   <footer>
-    <p>Source: College-town home sales dataset, version 1.0 (2026), collected March 2026. Medians are calculated from sales of $1,000 or more; each displayed price is rounded to the nearest whole dollar.</p>
+    <p>Source: College-town home sales dataset, version 1.0 (2026), collected March 2026. Sales under $10,000 are excluded from the city medians. Displayed prices are rounded to the nearest whole dollar.</p>
   </footer>
   <script>
     const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -98,20 +101,22 @@
         if (!response.ok) throw new Error("Could not load the sale records.");
         const records = parseCsv(await response.text());
         const grouped = new Map();
+        let qualifyingSales = 0;
         for (const record of records) {
           const price = Number(record.sale_price);
-          if (!record.city || !record.state || !Number.isFinite(price) || price < 1000) continue;
+          if (!record.city || !record.state || !Number.isFinite(price) || price < 10000) continue;
+          qualifyingSales++;
           const key = `${record.city}\u0000${record.state}`;
           if (!grouped.has(key)) grouped.set(key, { city: record.city, state: record.state, prices: [] });
           grouped.get(key).prices.push(price);
         }
         const cities = [...grouped.values()]
           .map(city => ({ ...city, median: median(city.prices) }))
-          .sort((a, b) => a.city.localeCompare(b.city) || a.state.localeCompare(b.state));
+          .sort((a, b) => b.median - a.median || a.city.localeCompare(b.city) || a.state.localeCompare(b.state));
         const maxPrice = Math.max(...cities.map(city => city.median));
         const chart = document.getElementById("price-chart");
         const table = document.getElementById("price-table");
-        for (const city of cities) {
+        for (const [index, city] of cities.entries()) {
           const chartRow = document.createElement("div");
           chartRow.className = "chart-row";
           chartRow.setAttribute("role", "listitem");
@@ -132,14 +137,14 @@
           chart.append(chartRow);
 
           const row = document.createElement("tr");
-          for (const value of [city.city, city.state, money.format(city.median)]) {
+          for (const value of [index + 1, `${city.city}, ${city.state}`, money.format(city.median), city.prices.length.toLocaleString("en-US")]) {
             const cell = document.createElement("td");
             cell.textContent = value;
             row.append(cell);
           }
           table.append(row);
         }
-        status.textContent = `${cities.length} cities shown. Median prices use ${money.format(1000)} and higher sales.`;
+        status.textContent = `${cities.length} cities · ${qualifyingSales.toLocaleString("en-US")} qualifying sales`;
       } catch (error) {
         status.textContent = "Sale prices could not be loaded. Please try reloading the page.";
       }
