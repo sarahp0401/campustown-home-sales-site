@@ -23,3 +23,9 @@ Copy this outline for each entry:
 - **Asked:** "...?" (The accompanying screenshot showed the live chart with prices but no filled bars.)
 - **Agent produced:** Updated the chart bar CSS to use block layout so the computed widths render.
 - **Checked or changed:** Fetched the latest `main` after the merge and confirmed it still used inline spans for bars. `git diff --check` passed; no browser check was performed.
+
+## 2026-11-13: Match ranked price example
+
+- **Asked:** "I still don't see the change / the second picture is the good example of how I want them to be look like"
+- **Agent produced:** Ranked the chart and table from highest to lowest median, added rank and included-sale counts to the table, and applied the example's $10,000 minimum sale-price rule.
+- **Checked or changed:** Fetched the merged `main` and found the earlier ascending-sort commit was not included because PR #2 merged before that commit was pushed. `git diff --check` passed; browser verification was not performed.
