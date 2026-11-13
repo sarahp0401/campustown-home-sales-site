@@ -107,7 +107,7 @@
         }
         const cities = [...grouped.values()]
           .map(city => ({ ...city, median: median(city.prices) }))
-          .sort((a, b) => a.city.localeCompare(b.city) || a.state.localeCompare(b.state));
+          .sort((a, b) => a.median - b.median || a.city.localeCompare(b.city) || a.state.localeCompare(b.state));
         const maxPrice = Math.max(...cities.map(city => city.median));
         const chart = document.getElementById("price-chart");
         const table = document.getElementById("price-table");

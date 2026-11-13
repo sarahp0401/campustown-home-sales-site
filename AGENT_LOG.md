@@ -23,3 +23,9 @@ Copy this outline for each entry:
 - **Asked:** "...?" (The accompanying screenshot showed the live chart with prices but no filled bars.)
 - **Agent produced:** Updated the chart bar CSS to use block layout so the computed widths render.
 - **Checked or changed:** Fetched the latest `main` after the merge and confirmed it still used inline spans for bars. `git diff --check` passed; no browser check was performed.
+
+## 2026-11-13: Sort prices ascending
+
+- **Asked:** "I want this ascending order; also I don't get the last part"
+- **Agent produced:** Changed the shared city ordering so both the chart and table sort from lowest median sale price to highest.
+- **Checked or changed:** Confirmed the chart and table both render from the same sorted city list. `git diff --check` passed; no browser check was performed.
